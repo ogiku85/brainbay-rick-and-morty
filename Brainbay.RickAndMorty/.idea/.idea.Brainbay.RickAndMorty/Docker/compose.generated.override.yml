@@ -1,0 +1,41 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  brainbay.rickandmorty.consoleapp:
+    build:
+      context: "/Users/rain/Documents/Projects/INTERVIEWS/brainbay-rick-and-morty/Brainbay.RickAndMorty"
+      dockerfile: "src/Brainbay.RickAndMorty.ConsoleApp/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/Brainbay.RickAndMorty.ConsoleApp.dll"
+    environment:
+      DOTNET_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "brainbay.rickandmorty.consoleapp:dev"
+    ports: []
+    volumes:
+    - "/Users/rain/Documents/Projects/INTERVIEWS/brainbay-rick-and-morty/Brainbay.RickAndMorty/src/Brainbay.RickAndMorty.ConsoleApp:/app:rw"
+    - "/Users/rain/Documents/Projects/INTERVIEWS/brainbay-rick-and-morty/Brainbay.RickAndMorty:/src:rw"
+    - "/Users/rain/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"
+  brainbay.rickandmorty.webapp:
+    build:
+      context: "/Users/rain/Documents/Projects/INTERVIEWS/brainbay-rick-and-morty/Brainbay.RickAndMorty"
+      dockerfile: "src/Brainbay.RickAndMorty.WebApp/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/Brainbay.RickAndMorty.WebApp.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_STATICWEBASSETS: "/app/bin/Debug/net8.0/Brainbay.RickAndMorty.WebApp.staticwebassets.runtime.CT.json"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "brainbay.rickandmorty.webapp:dev"
+    ports: []
+    volumes:
+    - "/Users/rain/Documents/Projects/INTERVIEWS/brainbay-rick-and-morty/Brainbay.RickAndMorty/src/Brainbay.RickAndMorty.WebApp:/app:rw"
+    - "/Users/rain/Documents/Projects/INTERVIEWS/brainbay-rick-and-morty/Brainbay.RickAndMorty:/src:rw"
+    - "/Users/rain/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"
