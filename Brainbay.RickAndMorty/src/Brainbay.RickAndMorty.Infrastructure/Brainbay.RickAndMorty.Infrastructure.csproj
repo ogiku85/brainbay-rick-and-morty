@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Brainbay.RickAndMorty.Application\Brainbay.RickAndMorty.Application.csproj" />
+      <ProjectReference Include="..\Brainbay.RickAndMorty.Domain\Brainbay.RickAndMorty.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

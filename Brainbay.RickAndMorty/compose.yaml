@@ -1,0 +1,12 @@
+﻿services:
+  brainbay.rickandmorty.webapp:
+    image: brainbay.rickandmorty.webapp
+    build:
+      context: .
+      dockerfile: src/Brainbay.RickAndMorty.WebApp/Dockerfile
+
+  brainbay.rickandmorty.consoleapp:
+    image: brainbay.rickandmorty.consoleapp
+    build:
+      context: .
+      dockerfile: src/Brainbay.RickAndMorty.ConsoleApp/Dockerfile
