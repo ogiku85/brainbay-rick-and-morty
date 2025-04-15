@@ -1,14 +1,37 @@
+using Brainbay.RickAndMorty.Application.Dtos.Request;
+using Brainbay.RickAndMorty.Application.Interfaces;
+using Brainbay.RickAndMorty.WebApp.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Brainbay.RickAndMorty.WebApp.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class CharacterController : ControllerBase
+
+[Route("Characters")]
+public class CharacterController : Controller
 {
-    [HttpGet]
-    public IActionResult GetAll()
+    private readonly ICharacterService _characterService;
+
+    public CharacterController(ICharacterService characterService)
     {
-        return Ok(new[] { "Rick", "Morty" });
+        _characterService = characterService;
+    }
+
+    [HttpGet("Planet/{planetName}")]
+    public async Task<IActionResult> CharactersByPlanet(string planetName)
+    {
+        var characters = (await _characterService.GetByPlanetAsync(planetName)).Characters;
+
+        if (characters == null || !characters.Any())
+        {
+            return View("NoCharacters");
+        }
+
+        var viewModel = new CharactersByPlanetViewModel
+        {
+            PlanetName = planetName,
+            Characters = characters
+        };
+
+        return View("CharactersByPlanet", viewModel);
     }
 }

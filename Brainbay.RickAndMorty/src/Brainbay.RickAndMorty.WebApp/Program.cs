@@ -1,4 +1,12 @@
+using Brainbay.RickAndMorty.Application.Extensions;
+using Brainbay.RickAndMorty.Infrastructure.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
+
+
+//Add services
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

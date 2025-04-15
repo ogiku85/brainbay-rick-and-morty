@@ -19,13 +19,16 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddDbContext<CharacterDbContext>(options =>
             options.UseMySQL(connectionString));
 
-        services.AddScoped<CharacterImportService>(); // Register your service
+       // services.AddScoped<RickAndMortyImportService>(); // Register your service
+        services.AddHttpClient<RickAndMortyImportService>();
     })
     .Build();
 
 // 🔥 Run the service
 using var scope = host.Services.CreateScope();
-var importService = scope.ServiceProvider.GetRequiredService<CharacterImportService>();
+var importService = scope.ServiceProvider.GetRequiredService<RickAndMortyImportService>();
 
 var url = "https://rickandmortyapi.com/api/character/?page=2";
-await importService.ImportCharactersAsync(url); // Or whatever your entry method is
+//await importService.ImportCharactersAsync(url); // Or whatever your entry method is
+
+await importService.ImportAllCharactersAsync(); // Or whatever your entry method is
