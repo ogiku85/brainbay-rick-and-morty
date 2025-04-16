@@ -21,17 +21,12 @@ public class CharacterController : Controller
     {
         var characters = (await _characterService.GetByPlanetAsync(planetName)).Characters;
 
-        if (characters == null || !characters.Any())
-        {
-            return View("NoCharacters");
-        }
-
         var viewModel = new CharactersByPlanetViewModel
         {
             PlanetName = planetName,
             Characters = characters
         };
-
-        return View("CharactersByPlanet", viewModel);
+        
+        return View("~/Views/Character/CharactersByPlanet.cshtml", viewModel);
     }
 }

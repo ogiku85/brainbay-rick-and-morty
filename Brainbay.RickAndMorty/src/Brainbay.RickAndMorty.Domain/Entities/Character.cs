@@ -16,10 +16,10 @@ public class Character
     public DateTime CreatedAt { get; set; }
 
     public Guid? OriginId { get; set; }
-    public Location Origin { get; set; }
+    public Location? Origin { get; set; }
 
     public Guid? LocationId { get; set; }
-    public Location Location { get; set; }
+    public Location? Location { get; set; }
 
     public ICollection<CharacterEpisode> CharacterEpisodes { get; set; } = new List<CharacterEpisode>();
 }

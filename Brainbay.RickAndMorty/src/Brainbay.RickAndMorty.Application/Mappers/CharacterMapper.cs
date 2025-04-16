@@ -6,8 +6,11 @@ namespace Brainbay.RickAndMorty.Application.Mappers;
 
 public static class CharacterMapper
 {
-    public static CharacterResponse ToCharacterResponse(this Character character)
+    public static CharacterResponse? ToCharacterResponse(this Character? character)
     {
+        if (character == null)
+            return null;
+        
         return new CharacterResponse
         {
             Id = character.Id,

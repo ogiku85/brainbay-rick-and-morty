@@ -11,9 +11,9 @@ public class CharacterResponse
     public string Gender { get; set; }
     public string ImageUrl { get; set; }
     
-    public LocationResponse Origin { get; set; }
+    public LocationResponse? Origin { get; set; }
     
-    public LocationResponse Location { get; set; }
+    public LocationResponse? Location { get; set; }
 
     public IReadOnlyCollection<EpisodeResponse> Episodes { get; set; } = new List<EpisodeResponse>();
 }

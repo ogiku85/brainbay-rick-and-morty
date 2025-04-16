@@ -14,8 +14,11 @@ public static class EpisodeMapper
         };
     }
     
-    public static EpisodeResponse ToEpisodeResponse(this CharacterEpisode characterEpisode)
+    public static EpisodeResponse? ToEpisodeResponse(this CharacterEpisode? characterEpisode)
     {
+        if (characterEpisode == null)
+            return null;
+        
         return new EpisodeResponse
         {
             Id = characterEpisode.Episode.Id,
@@ -23,7 +26,7 @@ public static class EpisodeMapper
         };
     }
     
-    public static IReadOnlyCollection<EpisodeResponse> ToEpisodeResponseList(this ICollection<CharacterEpisode> characterEpisodes)
+    public static IReadOnlyCollection<EpisodeResponse?> ToEpisodeResponseList(this ICollection<CharacterEpisode?> characterEpisodes)
     {
         return characterEpisodes.Select(c => c.ToEpisodeResponse()).ToList();
     }

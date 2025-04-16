@@ -34,7 +34,7 @@ namespace Brainbay.RickAndMorty.Application.Services;
                 characterResponses = (await _characterRepository.GetAllAsync()).ToCharacterResponseList();
                 fromDatabase = true;
 
-                await _cache.SetAsync(CacheKey, JsonSerializer.Serialize(characterResponses), TimeSpan.FromMinutes(5));
+                await _cache.SetAsync(CacheKey, characterResponses, TimeSpan.FromMinutes(5));
             }
 
 
@@ -45,11 +45,11 @@ namespace Brainbay.RickAndMorty.Application.Services;
         {
             //return (await GetAllAsync()).Characters;
             var getCharactersResponse = await GetAllAsync();
-            var characterFromCurrentPlanet = (await GetAllAsync()).Characters
-                .Where(c => c.Origin.Name.ToLower() == planet.ToLower())
-                .Select(c => c)
+            var charactersFromCurrentPlanet = getCharactersResponse?.Characters
+                .Where(c => c.Origin?.Name.ToLower() == planet?.ToLower())
                 .ToList();
-            return new GetCharactersResponse{ Characters = characterFromCurrentPlanet, FromDatabase = getCharactersResponse.FromDatabase };
+
+            return new GetCharactersResponse{ Characters = charactersFromCurrentPlanet, FromDatabase = getCharactersResponse.FromDatabase };
         }
 
         public async Task<CharacterResponse> AddCharacterAsync(CreateCharacterRequest createCharacterRequest)

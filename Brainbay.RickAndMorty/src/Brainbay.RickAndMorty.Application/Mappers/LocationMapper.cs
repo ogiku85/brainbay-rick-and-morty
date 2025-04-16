@@ -5,10 +5,11 @@ namespace Brainbay.RickAndMorty.Application.Mappers;
 
 public static class LocationMapper
 {
-    public static LocationResponse ToLocationResponse(this Location location)
+    public static LocationResponse? ToLocationResponse(this Location? location)
     {
         if (location == null)
             return null;
+        
         return new LocationResponse
         {
             Id = location.Id,
