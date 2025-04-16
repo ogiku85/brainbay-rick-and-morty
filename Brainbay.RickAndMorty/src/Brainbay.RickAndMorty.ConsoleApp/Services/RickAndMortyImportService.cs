@@ -1,126 +1,83 @@
 using System.Text.Json;
+using Brainbay.RickAndMorty.Application.Interfaces;
+using Brainbay.RickAndMorty.ConsoleApp.Interfaces;
 using Brainbay.RickAndMorty.ConsoleApp.Models;
 using Brainbay.RickAndMorty.Domain.Entities;
-using Brainbay.RickAndMorty.Infrastructure;
+using Brainbay.RickAndMorty.Infrastructure.Repositories;
+using Microsoft.Extensions.Options;
 
 namespace Brainbay.RickAndMorty.ConsoleApp.Services;
 
-
 public class RickAndMortyImportService
 {
-    private readonly CharacterDbContext _dbContext;
-    private readonly HttpClient _httpClient;
-    
-    private Dictionary<string, Location> _locationCache = new Dictionary<string, Location>();
-    private Dictionary<string, Episode>  _episodeCache = new Dictionary<string, Episode>();
+    private readonly ICharacterRepository _characterRepo;
+    private readonly IEpisodeRepository _episodeRepo;
+    private readonly ILocationRepository _locationRepo;
+    private readonly ICharacterEpisodeRepository _characterEpisodeRepo;
+    private readonly IRickAndMortyApiClient _apiClient;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public RickAndMortyImportService(CharacterDbContext dbContext, HttpClient httpClient)
+    private readonly Dictionary<string, Location> _locationCache = new();
+    private readonly Dictionary<string, Episode> _episodeCache = new();
+    private readonly string _baseUrl;
+    public RickAndMortyImportService(
+        ICharacterRepository characterRepo,
+        IEpisodeRepository episodeRepo,
+        ILocationRepository locationRepo,
+        ICharacterEpisodeRepository characterEpisodeRepo,
+        IRickAndMortyApiClient apiClient,
+        IUnitOfWork unitOfWork,
+        IOptions<RickAndMortyApiOptions> apiOptions)
     {
-        _dbContext = dbContext;
-        _httpClient = httpClient;
+        _characterRepo = characterRepo;
+        _episodeRepo = episodeRepo;
+        _locationRepo = locationRepo;
+        _characterEpisodeRepo = characterEpisodeRepo;
+        _apiClient = apiClient;
+        _unitOfWork = unitOfWork;
+        _baseUrl = apiOptions.Value.BaseUrl;
     }
 
     public async Task ImportAllCharactersAsync()
     {
         await ClearDatabaseAsync();
         
-        string nextPage = "https://rickandmortyapi.com/api/character";
+        string? nextPage = _baseUrl;
 
         while (!string.IsNullOrEmpty(nextPage))
         {
-            var json = await _httpClient.GetStringAsync(nextPage);
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var apiResponse = await _apiClient.GetCharactersPageAsync(nextPage);
+            if (apiResponse == null) break;
 
             await ImportCharactersAsync(apiResponse);
             nextPage = apiResponse.Info?.Next;
         }
     }
 
-    public async Task ClearDatabaseAsync()
-    { 
-        _dbContext.RemoveRange(_dbContext.Characters);
-        _dbContext.RemoveRange(_dbContext.Episodes);
-        _dbContext.RemoveRange(_dbContext.Locations);
-        _dbContext.RemoveRange(_dbContext.CharacterEpisodes);
-        
-        await _dbContext.SaveChangesAsync();
+    private async Task ClearDatabaseAsync()
+    {
+        await _characterEpisodeRepo.ClearAsync();
+        await _characterRepo.ClearAsync();
+        await _locationRepo.ClearAsync();
+        await _episodeRepo.ClearAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
-    public async Task ImportCharactersAsync(ApiResponse apiResponse)
+
+    private async Task ImportCharactersAsync(ApiResponse apiResponse)
     {
         var locationsToSave = new Dictionary<string, Location>();
         var episodesToSave = new Dictionary<string, Episode>();
 
-        foreach (var dto in apiResponse.Results)
+        foreach (var dto in apiResponse.Results.Where(c => c.Status == "Alive"))
         {
-            if (dto.Status != "Alive")
-            {
-                continue;
-            }
-            
-            // Handle origin location
-            Location origin = null;
-            if (!string.IsNullOrWhiteSpace(dto.Origin?.Url))
-            {
-                if (!_locationCache.TryGetValue(dto.Origin.Url, out origin))
-                {
-                    origin = new Location
-                    {
-                        Name = dto.Origin.Name,
-                        Url = dto.Origin.Url,
-                        ExternalId = ExtractExternalId(dto.Origin.Url)
-                    };
-                    _locationCache[dto.Origin.Url] = origin;
-                    locationsToSave[dto.Origin.Url] = origin;
-                }
-            }
+            var origin = ResolveAndTrackLocation(dto.Origin, locationsToSave);
+            var location = ResolveAndTrackLocation(dto.Location, locationsToSave);
 
-            // Handle current location
-            Location location = null;
-            if (!string.IsNullOrWhiteSpace(dto.Location?.Url))
-            {
-                if (!_locationCache.TryGetValue(dto.Location.Url, out location))
-                {
-                    location = new Location
-                    {
-                        Name = dto.Location.Name,
-                        Url = dto.Location.Url,
-                        ExternalId = ExtractExternalId(dto.Location.Url)
-                    };
-                    _locationCache[dto.Location.Url] = location;
-                    locationsToSave[dto.Location.Url] = location;
-                }
-            }
-
-            // Create character
-            var character = new Character
-            {
-                ExternalId = dto.Id,
-                Name = dto.Name,
-                Status = dto.Status,
-                Species = dto.Species,
-                Type = dto.Type,
-                Gender = dto.Gender,
-                ImageUrl = dto.Image,
-                CreatedAt = dto.Created,
-                Origin = origin,
-                Location = location
-            };
+            var character = CreateCharacter(dto, origin, location);
 
             foreach (var episodeUrl in dto.Episode.Distinct())
             {
-                if (!_episodeCache.TryGetValue(episodeUrl, out var episode))
-                {
-                    episode = new Episode
-                    {
-                        Url = episodeUrl,
-                        ExternalId = ExtractExternalId(episodeUrl)
-                    };
-                    _episodeCache[episodeUrl] = episode;
-                    episodesToSave[episodeUrl] = episode;
-                }
+                var episode = ResolveAndTrackEpisode(episodeUrl, episodesToSave);
 
                 character.CharacterEpisodes.Add(new CharacterEpisode
                 {
@@ -129,23 +86,84 @@ public class RickAndMortyImportService
                 });
             }
 
-            _dbContext.Characters.Add(character);
+            await _characterRepo.AddAsync(character);
         }
-        
-        _dbContext.Locations.AddRange(locationsToSave.Values);
-        _dbContext.Episodes.AddRange(episodesToSave.Values);
 
-        await _dbContext.SaveChangesAsync();
+        await _locationRepo.AddRangeAsync(locationsToSave.Values);
+        await _episodeRepo.AddRangeAsync(episodesToSave.Values);
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
-    private int? ExtractExternalId(string url)
+    private Episode ResolveAndTrackEpisode(string episodeUrl, Dictionary<string, Episode> episodesToSave)
+    {
+        if (_episodeCache.TryGetValue(episodeUrl, out var cachedEpisode))
+            return cachedEpisode;
+
+        var episode = CreateEpisode(episodeUrl);
+        _episodeCache[episodeUrl] = episode;
+        episodesToSave[episodeUrl] = episode;
+
+        return episode;
+    }
+
+    private Episode CreateEpisode(string url)
+    {
+        return new Episode
+        {
+            Url = url,
+            ExternalId = ExtractExternalId(url)
+        };
+    }
+
+    private Location? ResolveAndTrackLocation(ApiLocation apiLocation, Dictionary<string, Location> locationsToSave)
+    {
+        if (string.IsNullOrWhiteSpace(apiLocation.Url))
+            return null;
+
+        if (_locationCache.TryGetValue(apiLocation.Url, out var cachedLocation))
+            return cachedLocation;
+
+        var location = CreateLocation(apiLocation.Url, apiLocation.Name);
+
+        _locationCache[apiLocation.Url] = location;
+        locationsToSave[apiLocation.Url] = location;
+
+        return location;
+    }
+
+    private Location CreateLocation(string url, string? name)
+    {
+        return new Location
+        {
+            Url = url,
+            Name = name,
+            ExternalId = ExtractExternalId(url)
+        };
+    }
+
+    private Character CreateCharacter(ApiCharacter dto, Location? origin, Location? location)
+    {
+        return new Character
+        {
+            ExternalId = dto.Id,
+            Name = dto.Name,
+            Status = dto.Status,
+            Species = dto.Species,
+            Type = dto.Type,
+            Gender = dto.Gender,
+            ImageUrl = dto.Image,
+            CreatedAt = dto.Created,
+            Origin = origin,
+            Location = location,
+            CharacterEpisodes = new List<CharacterEpisode>()
+        };
+    }
+
+    private int? ExtractExternalId(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)) return null;
-
         var parts = url.Split('/');
-        if (int.TryParse(parts.LastOrDefault(), out var id))
-            return id;
-
-        return null;
+        return int.TryParse(parts.LastOrDefault(), out var id) ? id : null;
     }
 }

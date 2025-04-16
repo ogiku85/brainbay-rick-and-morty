@@ -1,9 +1,15 @@
-﻿using Brainbay.RickAndMorty.ConsoleApp.Services;
+﻿using Brainbay.RickAndMorty.ConsoleApp.Clients;
+using Brainbay.RickAndMorty.ConsoleApp.Interfaces;
+using Brainbay.RickAndMorty.ConsoleApp.Models;
+using Brainbay.RickAndMorty.ConsoleApp.Services;
 using Brainbay.RickAndMorty.Infrastructure;
+using Brainbay.RickAndMorty.Infrastructure.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Polly;
+using Polly.Extensions.Http;
 
 
 var host = Host.CreateDefaultBuilder(args)
@@ -14,13 +20,28 @@ var host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
+        // configure api base url
+        services.Configure<RickAndMortyApiOptions>(
+            context.Configuration.GetSection("RickAndMortyApi"));
+
         var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
 
+        // db context
         services.AddDbContext<CharacterDbContext>(options =>
             options.UseMySQL(connectionString));
 
-       // services.AddScoped<RickAndMortyImportService>(); // Register your service
-        services.AddHttpClient<RickAndMortyImportService>();
+        services.AddInfrastructure(context.Configuration);
+        services.AddHttpClient<IRickAndMortyApiClient, RickAndMortyApiClient>();
+        services.AddScoped<RickAndMortyImportService>();
+        
+        // HttpClient with Polly
+        services.AddHttpClient<IRickAndMortyApiClient, RickAndMortyApiClient>()
+            .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+            .AddPolicyHandler(GetRetryPolicy())
+            .AddPolicyHandler(GetTimeoutPolicy());
+
+        // Import Service
+        services.AddScoped<RickAndMortyImportService>();
     })
     .Build();
 
@@ -28,7 +49,19 @@ var host = Host.CreateDefaultBuilder(args)
 using var scope = host.Services.CreateScope();
 var importService = scope.ServiceProvider.GetRequiredService<RickAndMortyImportService>();
 
-var url = "https://rickandmortyapi.com/api/character/?page=2";
-//await importService.ImportCharactersAsync(url); // Or whatever your entry method is
+await importService.ImportAllCharactersAsync(); 
 
-await importService.ImportAllCharactersAsync(); // Or whatever your entry method is
+// ---- Polly Policies ----
+
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .WaitAndRetryAsync(3, retryAttempt =>
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))); // Exponential backoff
+}
+
+static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
+{
+    return Policy.TimeoutAsync<HttpResponseMessage>(10); // 10 seconds timeout
+}

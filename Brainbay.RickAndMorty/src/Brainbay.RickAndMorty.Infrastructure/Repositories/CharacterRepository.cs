@@ -29,9 +29,15 @@ public class CharacterRepository : ICharacterRepository
             .ToListAsync();
     }
 
-    public async Task AddCharacterAsync(Character character)
+    public async Task AddAsync(Character character)
     {
         await _dbContext.Characters.AddAsync(character);
+    }
+    
+    public Task ClearAsync()
+    {
+        _dbContext.Characters.RemoveRange(_dbContext.Characters);
+        return Task.CompletedTask;
     }
 
     public async Task<Character?> GetByNameAsync(string characterName)

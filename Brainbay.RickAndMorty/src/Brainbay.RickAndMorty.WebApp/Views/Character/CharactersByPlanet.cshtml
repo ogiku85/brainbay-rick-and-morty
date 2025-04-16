@@ -1,14 +1,17 @@
 @model CharactersByPlanetViewModel
 
-    <h2>Characters from @Model.PlanetName</h2>
+<h2>Characters from @Model.PlanetName</h2>
 
-    @if (Model.Characters.Any())
+@if (Model.Characters.Any())
 {
     <ul>
         @foreach (var character in Model.Characters)
-    {
-        <li><strong>@character.Name</strong> - @character.Species</li>
-    }
+        {
+            <li>
+                <strong>@character.Name</strong> - @character.Species<br />
+                <img src="@character.ImageUrl" alt="@character.Name" style="width:100px;height:auto;" />
+            </li>
+        }
     </ul>
 }
 else

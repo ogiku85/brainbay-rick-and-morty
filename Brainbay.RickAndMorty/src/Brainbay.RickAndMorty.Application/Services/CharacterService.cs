@@ -63,7 +63,7 @@ namespace Brainbay.RickAndMorty.Application.Services;
                 throw new InvalidOperationException("Duplicate character.");
 
             var character = createCharacterRequest.ToCharacter();
-           await _characterRepository.AddCharacterAsync(character);
+           await _characterRepository.AddAsync(character);
            await _characterRepository.SaveAsync();
 
             await _cache.RemoveAsync(CacheKey); // Invalidate cache

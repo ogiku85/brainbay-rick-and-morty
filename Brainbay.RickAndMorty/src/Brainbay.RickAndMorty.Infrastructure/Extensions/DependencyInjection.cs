@@ -27,6 +27,11 @@ public static class DependencyInjection
         
         // Add services and repositories
         services.AddScoped<ICharacterRepository, CharacterRepository>();
+        services.AddScoped<ICharacterRepository, CharacterRepository>();
+        services.AddScoped<IEpisodeRepository, EpisodeRepository>();
+        services.AddScoped<ILocationRepository, LocationRepository>();
+        services.AddScoped<ICharacterEpisodeRepository, CharacterEpisodeRepository>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         
         return services;
     }
