@@ -33,10 +33,17 @@ namespace Brainbay.RickAndMorty.Application.Services;
 
             if (characterResponses == null)
             {
+                _logger.LogInformation("Data not found in cache");
+                _logger.LogInformation("Getting all characters from database");
+                
                 characterResponses = (await _characterRepository.GetAllAsync()).ToCharacterResponseList();
                 fromDatabase = true;
 
+                _logger.LogInformation("Returning all characters from database");
+                
                 await _cache.SetAsync(CacheKey, characterResponses, TimeSpan.FromMinutes(5));
+                
+                _logger.LogInformation("Updated the cache");
             }
 
 

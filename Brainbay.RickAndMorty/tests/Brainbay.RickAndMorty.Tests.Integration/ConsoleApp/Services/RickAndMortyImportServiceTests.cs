@@ -5,6 +5,7 @@ using Brainbay.RickAndMorty.Infrastructure;
 using Brainbay.RickAndMorty.Infrastructure.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Testcontainers.MySql;
 using Xunit;
@@ -55,7 +56,8 @@ public class RickAndMortyImportServiceTests : IAsyncLifetime
             Options.Create(new RickAndMortyApiOptions
             {
                 BaseUrl = "/api/character"
-            })
+            }),
+            new LoggerFactory().CreateLogger<RickAndMortyImportService>()
         );
     }
 

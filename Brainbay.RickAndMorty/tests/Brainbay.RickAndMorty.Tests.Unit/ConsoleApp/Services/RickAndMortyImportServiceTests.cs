@@ -7,6 +7,7 @@ using Xunit;
 using Moq;
 using Microsoft.Extensions.Options;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 
 
 namespace Brainbay.RickAndMorty.Tests.Unit.ConsoleApp.Services;
@@ -21,6 +22,7 @@ public class RickAndMortyImportServiceTests
     private readonly Mock<IRickAndMortyApiClient> _apiClient = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly IOptions<RickAndMortyApiOptions> _apiOptions;
+    private readonly Mock<ILogger<RickAndMortyImportService>> _logger = new();
 
     private readonly RickAndMortyImportService _service;
 
@@ -38,7 +40,9 @@ public class RickAndMortyImportServiceTests
             _characterEpisodeRepo.Object,
             _apiClient.Object,
             _unitOfWork.Object,
-            _apiOptions
+            _apiOptions,
+            _logger.Object
+            
         );
     }
 
@@ -123,4 +127,50 @@ public class RickAndMortyImportServiceTests
 
         await action.Should().NotThrowAsync();
     }
+    
+    [Fact]
+    public async Task ImportAllCharactersAsync_ReusesCachedEpisodeAndLocation()
+    {
+        var commonEpisode = "https://api.example.com/episode/1";
+        var commonLocation = new ApiLocation { Url = "https://api.example.com/location/1", Name = "Earth" };
+
+        var response = new ApiResponse
+        {
+            Info = new ApiInfo { Next = null },
+            Results = new List<ApiCharacter>
+            {
+                new ApiCharacter
+                {
+                    Id = 1,
+                    Name = "Rick",
+                    Status = "Alive",
+                    Species = "Human",
+                    Gender = "Male",
+                    Episode = new List<string> { commonEpisode },
+                    Origin = commonLocation,
+                    Location = commonLocation
+                },
+                new ApiCharacter
+                {
+                    Id = 2,
+                    Name = "Summer",
+                    Status = "Alive",
+                    Species = "Human",
+                    Gender = "Female",
+                    Episode = new List<string> { commonEpisode },
+                    Origin = commonLocation,
+                    Location = commonLocation
+                }
+            }
+        };
+
+        _apiClient.Setup(c => c.GetCharactersPageAsync(It.IsAny<string>()))
+            .ReturnsAsync(response);
+
+        await _service.ImportAllCharactersAsync();
+
+        _locationRepo.Verify(r => r.AddRangeAsync(It.Is<IEnumerable<Location>>(l => l.Count() == 1)), Times.Once);
+        _episodeRepo.Verify(r => r.AddRangeAsync(It.Is<IEnumerable<Episode>>(e => e.Count() == 1)), Times.Once);
+    }
+
 }

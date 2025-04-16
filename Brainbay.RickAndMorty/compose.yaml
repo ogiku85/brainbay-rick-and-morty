@@ -4,27 +4,45 @@
     build:
       context: .
       dockerfile: src/Brainbay.RickAndMorty.WebApp/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysqlserver
+      - redis
+      - elasticsearch
+    environment:
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
+      ConnectionStrings__DefaultConnection: "Server=mysqlserver;Port=3306;Database=brainbay-rick-and-morty-db;UserID=root;Password=password"
+      Redis__ConnectionString: "redis:6379"
+      WriteTo__0__Name: "Elasticsearch"
+      WriteTo__0__Args__nodeUris: "http://elasticsearch:9200"
+      WriteTo__0__Args__indexFormat: "brainbay-logs-{0:yyyy.MM.dd}"
+      WriteTo__0__Args__autoRegisterTemplate: "true"
+      WriteTo__0__Args__templateName: "brainbay-logs-template"
 
   brainbay.rickandmorty.consoleapp:
     image: brainbay.rickandmorty.consoleapp
     build:
       context: .
       dockerfile: src/Brainbay.RickAndMorty.ConsoleApp/Dockerfile
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      - mysqlserver
+      - redis
+      - elasticsearch
     environment:
-      SA_PASSWORD: "password"
-      ACCEPT_EULA: "Y"
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserverdata:/var/opt/mssql
+      ConnectionStrings__DefaultConnection: "Server=mysqlserver;Port=3306;Database=brainbay-rick-and-morty-db;UserID=root;Password=password"
+      Redis__ConnectionString: "redis:6379"
+      WriteTo__0__Name: "Elasticsearch"
+      WriteTo__0__Args__nodeUris: "http://elasticsearch:9200"
+      WriteTo__0__Args__indexFormat: "brainbay-logs-{0:yyyy.MM.dd}"
+      WriteTo__0__Args__autoRegisterTemplate: "true"
+      WriteTo__0__Args__templateName: "brainbay-logs-template"
 
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
-      
+
   mysqlserver:
     image: mysql:8.2.0
     container_name: 'my_sql_server_8_2_0_1'
@@ -32,10 +50,38 @@
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: 'password'
-      MYSQL_DATABASE: 'db'
+      MYSQL_DATABASE: 'brainbay-rick-and-morty-db'
     volumes:
       - my-db:/var/lib/mysql
-  
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
 volumes:
   my-db:
   sqlserverdata:
+  esdata:

@@ -4,6 +4,7 @@ using Brainbay.RickAndMorty.ConsoleApp.Interfaces;
 using Brainbay.RickAndMorty.ConsoleApp.Models;
 using Brainbay.RickAndMorty.Domain.Entities;
 using Brainbay.RickAndMorty.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Brainbay.RickAndMorty.ConsoleApp.Services;
@@ -16,6 +17,7 @@ public class RickAndMortyImportService
     private readonly ICharacterEpisodeRepository _characterEpisodeRepo;
     private readonly IRickAndMortyApiClient _apiClient;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<RickAndMortyImportService> _logger;
 
     private readonly Dictionary<string, Location> _locationCache = new();
     private readonly Dictionary<string, Episode> _episodeCache = new();
@@ -27,7 +29,8 @@ public class RickAndMortyImportService
         ICharacterEpisodeRepository characterEpisodeRepo,
         IRickAndMortyApiClient apiClient,
         IUnitOfWork unitOfWork,
-        IOptions<RickAndMortyApiOptions> apiOptions)
+        IOptions<RickAndMortyApiOptions> apiOptions,
+        ILogger<RickAndMortyImportService> logger)
     {
         _characterRepo = characterRepo;
         _episodeRepo = episodeRepo;
@@ -35,6 +38,7 @@ public class RickAndMortyImportService
         _characterEpisodeRepo = characterEpisodeRepo;
         _apiClient = apiClient;
         _unitOfWork = unitOfWork;
+        _logger = logger;
         _baseUrl = apiOptions.Value.BaseUrl;
     }
 
@@ -56,15 +60,21 @@ public class RickAndMortyImportService
 
     private async Task ClearDatabaseAsync()
     {
+        _logger.LogInformation("Clearing database...");
+        
         await _characterEpisodeRepo.ClearAsync();
         await _characterRepo.ClearAsync();
         await _locationRepo.ClearAsync();
         await _episodeRepo.ClearAsync();
         await _unitOfWork.SaveChangesAsync();
+        
+        _logger.LogInformation("Database cleared.");
     }
 
     private async Task ImportCharactersAsync(ApiResponse apiResponse)
     {
+        _logger.LogInformation("Processing and Importing characters...");
+        
         var locationsToSave = new Dictionary<string, Location>();
         var episodesToSave = new Dictionary<string, Episode>();
 
@@ -93,6 +103,8 @@ public class RickAndMortyImportService
         await _episodeRepo.AddRangeAsync(episodesToSave.Values);
 
         await _unitOfWork.SaveChangesAsync();
+        
+        _logger.LogInformation("{apiResponse.results.Count} Characters processed from current response.}.");
     }
 
     private Episode ResolveAndTrackEpisode(string episodeUrl, Dictionary<string, Episode> episodesToSave)
