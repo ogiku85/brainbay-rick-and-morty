@@ -3,14 +3,14 @@ using Brainbay.RickAndMorty.ConsoleApp.Interfaces;
 using Brainbay.RickAndMorty.ConsoleApp.Models;
 using Brainbay.RickAndMorty.ConsoleApp.Services;
 using Brainbay.RickAndMorty.Domain.Entities;
+using Xunit;
+using Moq;
+using Microsoft.Extensions.Options;
+using FluentAssertions;
+
 
 namespace Brainbay.RickAndMorty.Tests.Unit.ConsoleApp.Services;
 
-using Xunit;
-using Moq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 
 public class RickAndMortyImportServiceTests
 {
@@ -119,8 +119,8 @@ public class RickAndMortyImportServiceTests
         _apiClient.Setup(x => x.GetCharactersPageAsync(It.IsAny<string>()))
             .ReturnsAsync((ApiResponse?)null);
 
-        var exception = await Record.ExceptionAsync(() => _service.ImportAllCharactersAsync());
+        var action = async () => await _service.ImportAllCharactersAsync();
 
-        Assert.Null(exception);
+        await action.Should().NotThrowAsync();
     }
 }
