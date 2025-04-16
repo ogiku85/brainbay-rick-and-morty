@@ -14,13 +14,15 @@ namespace Brainbay.RickAndMorty.Application.Services;
         private readonly ICharacterRepository _characterRepository;
         private readonly ILogger<CharacterService> _logger;
         private readonly ICacheService _cache;
+        private readonly IUnitOfWork _unitOfWork;
         private const string CacheKey = "all_characters";
 
-        public CharacterService(ICharacterRepository characterRepository, ILogger<CharacterService> logger, ICacheService cache)
+        public CharacterService(ICharacterRepository characterRepository, ILogger<CharacterService> logger, ICacheService cache, IUnitOfWork unitOfWork)
         {
             _characterRepository = characterRepository;
             _logger = logger;
             _cache = cache;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<GetCharactersResponse> GetAllAsync()
@@ -64,7 +66,7 @@ namespace Brainbay.RickAndMorty.Application.Services;
 
             var character = createCharacterRequest.ToCharacter();
            await _characterRepository.AddAsync(character);
-           await _characterRepository.SaveAsync();
+           await _unitOfWork.SaveChangesAsync();
 
             await _cache.RemoveAsync(CacheKey); // Invalidate cache
 
