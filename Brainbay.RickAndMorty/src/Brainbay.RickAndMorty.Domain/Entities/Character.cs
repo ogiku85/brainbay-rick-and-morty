@@ -1,4 +1,6 @@
 
+using Brainbay.RickAndMorty.Domain.Enums;
+
 namespace Brainbay.RickAndMorty.Domain.Entities;
 
 public class Character
@@ -7,7 +9,7 @@ public class Character
     public int? ExternalId { get; set; }
 
     public string Name { get; set; }
-    public string Status { get; set; }
+    public CharacterStatus Status { get; set; }
     public string Species { get; set; }
     public string Type { get; set; }
     public string Gender { get; set; }

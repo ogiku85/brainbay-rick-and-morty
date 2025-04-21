@@ -3,6 +3,7 @@ using Brainbay.RickAndMorty.Application.Interfaces;
 using Brainbay.RickAndMorty.ConsoleApp.Interfaces;
 using Brainbay.RickAndMorty.ConsoleApp.Models;
 using Brainbay.RickAndMorty.Domain.Entities;
+using Brainbay.RickAndMorty.Domain.Enums;
 using Brainbay.RickAndMorty.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -160,7 +161,9 @@ public class RickAndMortyImportService
         {
             ExternalId = dto.Id,
             Name = dto.Name,
-            Status = dto.Status,
+            Status = Enum.TryParse<CharacterStatus>(dto.Status, true, out var status)
+                ? status
+                : CharacterStatus.Unknown,
             Species = dto.Species,
             Type = dto.Type,
             Gender = dto.Gender,

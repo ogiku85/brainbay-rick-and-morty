@@ -3,6 +3,7 @@ using Brainbay.RickAndMorty.Application.Dtos.Response;
 using Brainbay.RickAndMorty.Application.Interfaces;
 using Brainbay.RickAndMorty.Application.Services;
 using Brainbay.RickAndMorty.Domain.Entities;
+using Brainbay.RickAndMorty.Domain.Enums;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -56,7 +57,7 @@ public class CharacterServiceTests
 
         var dbCharacters = new List<Character>
         {
-            new Character { Name = "Morty", Status = "Alive", Origin = new Location { Name = "Earth" } }
+            new Character { Name = "Morty", Status = CharacterStatus.Alive, Origin = new Location { Name = "Earth" } }
         };
 
         _characterRepoMock.Setup(r => r.GetAllAsync()).ReturnsAsync(dbCharacters);
@@ -97,7 +98,7 @@ public class CharacterServiceTests
     public async Task AddCharacterAsync_ThrowsIfCharacterIsNotAlive()
     {
         // Arrange
-        var request = new CreateCharacterRequest { Name = "Rick", Status = "Dead" };
+        var request = new CreateCharacterRequest { Name = "Rick", Status = CharacterStatus.Dead};
 
         // Act
         Func<Task> act = async () => await _service.AddCharacterAsync(request);
@@ -111,7 +112,7 @@ public class CharacterServiceTests
     public async Task AddCharacterAsync_ThrowsIfDuplicateCharacter()
     {
         // Arrange
-        var request = new CreateCharacterRequest { Name = "Rick", Status = "Alive" };
+        var request = new CreateCharacterRequest { Name = "Rick", Status = CharacterStatus.Alive };
         _characterRepoMock.Setup(r => r.CharacterExists("Rick")).ReturnsAsync(false);
 
         // Act
@@ -129,7 +130,7 @@ public class CharacterServiceTests
         var request = new CreateCharacterRequest
         {
             Name = "Rick",
-            Status = "Alive",
+            Status = CharacterStatus.Alive,
             OriginLocationId = Guid.NewGuid(),
         };
 

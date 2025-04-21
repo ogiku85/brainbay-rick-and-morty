@@ -1,6 +1,7 @@
 using Brainbay.RickAndMorty.ConsoleApp.Clients;
 using Brainbay.RickAndMorty.ConsoleApp.Models;
 using Brainbay.RickAndMorty.ConsoleApp.Services;
+using Brainbay.RickAndMorty.Domain.Enums;
 using Brainbay.RickAndMorty.Infrastructure;
 using Brainbay.RickAndMorty.Infrastructure.Repositories;
 using FluentAssertions;
@@ -80,7 +81,7 @@ public class RickAndMortyImportServiceTests : IAsyncLifetime
         characters.Should().NotBeEmpty("because real API should return alive characters");
         episodes.Should().NotBeEmpty("because characters have appeared in episodes");
 
-        characters.Should().OnlyContain(c => c.Status == "Alive");
+        characters.Should().OnlyContain(c => c.Status == CharacterStatus.Alive);
         characters.Count().Should().Be(439);
     }
 }

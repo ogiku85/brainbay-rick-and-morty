@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Serilog;
 using Brainbay.RickAndMorty.Application.Extensions;
 using Brainbay.RickAndMorty.Infrastructure.Extensions;
@@ -22,7 +23,11 @@ try
     builder.Services.AddProblemDetails();
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddApplication();
-    builder.Services.AddControllersWithViews();
+    builder.Services.AddControllersWithViews()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });;
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
     
