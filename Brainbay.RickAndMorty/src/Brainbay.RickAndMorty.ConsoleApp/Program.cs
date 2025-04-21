@@ -10,46 +10,107 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
+using MySql.Data.MySqlClient;
+using System.Net.Sockets;
+using Serilog;
 
 
-var host = Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration((context, config) =>
+
+try
+{
+    // Load configuration first
+    var configuration = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+        .AddEnvironmentVariables()
+        .Build();
+
+    // Configure Serilog
+
+    var elasticUri = configuration["Serilog:ElasticUri"] ?? "http://elasticsearch:9200";
+
+    Log.Logger = new LoggerConfiguration()
+        .Enrich.FromLogContext()
+        .Enrich.WithMachineName()
+        .Enrich.WithEnvironmentName()
+        .WriteTo.Console()
+        .CreateLogger();
+    
+
+    Log.Information("🚀 Starting RickAndMorty.ConsoleApp...");
+
+    var host = Host.CreateDefaultBuilder(args)
+        .UseSerilog()
+        .ConfigureAppConfiguration((context, config) =>
+        {
+            config.SetBasePath(Directory.GetCurrentDirectory());
+            config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true);
+            config.AddEnvironmentVariables();
+        })
+        .ConfigureServices((context, services) =>
+        {
+            services.Configure<RickAndMortyApiOptions>(
+                context.Configuration.GetSection("RickAndMortyApiOptions"));
+
+            var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
+
+            services.AddDbContext<CharacterDbContext>(options =>
+                options.UseMySQL(connectionString));
+
+            services.AddInfrastructure(context.Configuration);
+            services.AddHttpClient<IRickAndMortyApiClient, RickAndMortyApiClient>()
+                .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+                .AddPolicyHandler(GetRetryPolicy())
+                .AddPolicyHandler(GetTimeoutPolicy());
+
+            services.AddScoped<RickAndMortyImportService>();
+        })
+        .Build();
+
+    // Retry DB migration using Polly
+    var retryPolicy = Policy
+        .Handle<MySqlException>()
+        .Or<SocketException>()
+        .WaitAndRetry(5, retryAttempt =>
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, delay, attempt, _) =>
+        {
+            Log.Warning("⚠️ Retry {Attempt} after {Delay}s: {Message}", attempt, delay.TotalSeconds, ex.Message);
+        });
+
+    using (var scope = host.Services.CreateScope())
     {
-        config.SetBasePath(Directory.GetCurrentDirectory());
-        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-    })
-    .ConfigureServices((context, services) =>
+        var dbContext = scope.ServiceProvider.GetRequiredService<CharacterDbContext>();
+
+        retryPolicy.Execute(() =>
+        {
+            Log.Information("⏳ Attempting database migration...");
+            dbContext.Database.Migrate();
+            Log.Information("✅ Database migration complete.");
+        });
+    }
+
+    // Run import
+    using (var scope = host.Services.CreateScope())
     {
-        // configure api base url
-        services.Configure<RickAndMortyApiOptions>(
-            context.Configuration.GetSection("RickAndMortyApi"));
+        Log.Information("🔥 Starting import service...");
 
-        var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
+        var importService = scope.ServiceProvider.GetRequiredService<RickAndMortyImportService>();
+        await importService.ImportAllCharactersAsync();
 
-        // db context
-        services.AddDbContext<CharacterDbContext>(options =>
-            options.UseMySQL(connectionString));
-
-        services.AddInfrastructure(context.Configuration);
-        services.AddHttpClient<IRickAndMortyApiClient, RickAndMortyApiClient>();
-        services.AddScoped<RickAndMortyImportService>();
-        
-        // HttpClient with Polly
-        services.AddHttpClient<IRickAndMortyApiClient, RickAndMortyApiClient>()
-            .SetHandlerLifetime(TimeSpan.FromMinutes(5))
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetTimeoutPolicy());
-
-        // Import Service
-        services.AddScoped<RickAndMortyImportService>();
-    })
-    .Build();
-
-// 🔥 Run the service
-using var scope = host.Services.CreateScope();
-var importService = scope.ServiceProvider.GetRequiredService<RickAndMortyImportService>();
-
-await importService.ImportAllCharactersAsync(); 
+        Log.Information("✅ Finished import.");
+    }
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "❌ Unhandled exception in RickAndMorty.ConsoleApp");
+}
+finally
+{
+    Log.Information("👋 Shutting down RickAndMorty.ConsoleApp");
+    Log.CloseAndFlush();
+}
 
 // ---- Polly Policies ----
 
@@ -58,10 +119,10 @@ static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
     return HttpPolicyExtensions
         .HandleTransientHttpError()
         .WaitAndRetryAsync(3, retryAttempt =>
-            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))); // Exponential backoff
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 }
 
 static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
 {
-    return Policy.TimeoutAsync<HttpResponseMessage>(10); // 10 seconds timeout
+    return Policy.TimeoutAsync<HttpResponseMessage>(10);
 }

@@ -47,7 +47,8 @@ public class RickAndMortyImportService
         await ClearDatabaseAsync();
         
         string? nextPage = _baseUrl;
-
+        _logger.LogInformation($"Importing characters from {nextPage}", nextPage);
+        
         while (!string.IsNullOrEmpty(nextPage))
         {
             var apiResponse = await _apiClient.GetCharactersPageAsync(nextPage);
@@ -103,8 +104,7 @@ public class RickAndMortyImportService
         await _episodeRepo.AddRangeAsync(episodesToSave.Values);
 
         await _unitOfWork.SaveChangesAsync();
-        
-        _logger.LogInformation("{apiResponse.results.Count} Characters processed from current response.}.");
+        _logger.LogInformation("{CharacterCount} characters processed from current response.", apiResponse.Results.Count);
     }
 
     private Episode ResolveAndTrackEpisode(string episodeUrl, Dictionary<string, Episode> episodesToSave)

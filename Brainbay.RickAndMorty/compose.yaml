@@ -11,14 +11,16 @@
       - redis
       - elasticsearch
     environment:
+      ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://0.0.0.0:8080"
       ConnectionStrings__DefaultConnection: "Server=mysqlserver;Port=3306;Database=brainbay-rick-and-morty-db;UserID=root;Password=password"
-      Redis__ConnectionString: "redis:6379"
-      WriteTo__0__Name: "Elasticsearch"
-      WriteTo__0__Args__nodeUris: "http://elasticsearch:9200"
-      WriteTo__0__Args__indexFormat: "brainbay-logs-{0:yyyy.MM.dd}"
-      WriteTo__0__Args__autoRegisterTemplate: "true"
-      WriteTo__0__Args__templateName: "brainbay-logs-template"
+      Redis__ConnectionString: "redis:6379,abortConnect=false"
+      Serilog__WriteTo__0__Name: "Console"
+      Serilog__WriteTo__1__Name: "Elasticsearch"
+      Serilog__WriteTo__1__Args__nodeUris: "http://elasticsearch:9200"
+      Serilog__WriteTo__1__Args__indexFormat: "brainbay-logs-{0:yyyy.MM.dd}"
+      Serilog__WriteTo__1__Args__autoRegisterTemplate: "true"
+      Serilog__WriteTo__1__Args__templateName: "brainbay-logs-template"
 
   brainbay.rickandmorty.consoleapp:
     image: brainbay.rickandmorty.consoleapp
@@ -30,13 +32,16 @@
       - redis
       - elasticsearch
     environment:
+      ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Server=mysqlserver;Port=3306;Database=brainbay-rick-and-morty-db;UserID=root;Password=password"
-      Redis__ConnectionString: "redis:6379"
-      WriteTo__0__Name: "Elasticsearch"
-      WriteTo__0__Args__nodeUris: "http://elasticsearch:9200"
-      WriteTo__0__Args__indexFormat: "brainbay-logs-{0:yyyy.MM.dd}"
-      WriteTo__0__Args__autoRegisterTemplate: "true"
-      WriteTo__0__Args__templateName: "brainbay-logs-template"
+      Redis__ConnectionString: "redis:6379,abortConnect=false"
+      Serilog__WriteTo__0__Name: "Console"
+      Serilog__WriteTo__1__Name: "Elasticsearch"
+      Serilog__WriteTo__1__Args__nodeUris: "http://elasticsearch:9200"
+      Serilog__WriteTo__1__Args__indexFormat: "brainbay-logs-{0:yyyy.MM.dd}"
+      Serilog__WriteTo__1__Args__autoRegisterTemplate: "true"
+      Serilog__WriteTo__1__Args__templateName: "brainbay-logs-template"
+      
 
   redis:
     image: redis:latest
