@@ -1,8 +1,10 @@
 using Serilog;
-using Serilog.Events;
 using Brainbay.RickAndMorty.Application.Extensions;
 using Brainbay.RickAndMorty.Infrastructure.Extensions;
 using Brainbay.RickAndMorty.Infrastructure;
+using Brainbay.RickAndMorty.WebApp.Validators;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
 try
@@ -23,6 +25,11 @@ try
     builder.Services.AddControllersWithViews();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
+    
+    // Add FluentValidation
+    builder.Services.AddFluentValidationAutoValidation();
+    builder.Services.AddValidatorsFromAssemblyContaining<CreateCharacterRequestValidator>();
+
 
     var app = builder.Build();
 
@@ -32,7 +39,9 @@ try
         dbContext.Database.Migrate();
     }
 
-    if (app.Environment.IsDevelopment())
+    // Allow Swagger in prod for this assignment
+    // Don't allow in real production
+    if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     {
         app.UseSwagger();
         app.UseSwaggerUI(c =>

@@ -20,6 +20,8 @@
 
     <ItemGroup>
       <PackageReference Include="Elastic.Serilog.Sinks" Version="8.12.3" />
+      <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+      <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
       <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.3.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">
         <PrivateAssets>all</PrivateAssets>
