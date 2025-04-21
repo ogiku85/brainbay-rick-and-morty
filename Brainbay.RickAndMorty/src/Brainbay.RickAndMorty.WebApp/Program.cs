@@ -3,6 +3,7 @@ using Serilog;
 using Brainbay.RickAndMorty.Application.Extensions;
 using Brainbay.RickAndMorty.Infrastructure.Extensions;
 using Brainbay.RickAndMorty.Infrastructure;
+using Brainbay.RickAndMorty.WebApp.Exceptions;
 using Brainbay.RickAndMorty.WebApp.Validators;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -19,8 +20,9 @@ try
 
     builder.Host.UseSerilog();
 
-    // Standard config loading (already handled by builder)
     builder.Services.AddProblemDetails();
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddApplication();
     builder.Services.AddControllersWithViews()
@@ -55,12 +57,13 @@ try
             c.RoutePrefix = string.Empty;
         });
     }
-    else
+
+    if (!app.Environment.IsDevelopment())
     {
-        app.UseExceptionHandler("/Home/Error");
         app.UseHsts();
     }
-
+    
+    app.UseExceptionHandler("/Home/Error");
     app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseRouting();
