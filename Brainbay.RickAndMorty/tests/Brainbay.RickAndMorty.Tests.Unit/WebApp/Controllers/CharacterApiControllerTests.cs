@@ -1,3 +1,4 @@
+using Brainbay.RickAndMorty.Application.Dtos.Enums;
 using Brainbay.RickAndMorty.Application.Dtos.Request;
 using Brainbay.RickAndMorty.Application.Dtos.Response;
 using Brainbay.RickAndMorty.Application.Interfaces;
@@ -34,8 +35,8 @@ public class CharacterApiControllerTests
         // Arrange
         var characters = new List<CharacterResponse>
         {
-            new CharacterResponse { Id = Guid.NewGuid(), Name = "Rick Sanchez", Status = CharacterStatus.Alive },
-            new CharacterResponse { Id = Guid.NewGuid(), Name = "Morty Smith", Status = CharacterStatus.Alive }
+            new CharacterResponse { Id = Guid.NewGuid(), Name = "Rick Sanchez", Status = CharacterStatusDto.Alive },
+            new CharacterResponse { Id = Guid.NewGuid(), Name = "Morty Smith", Status = CharacterStatusDto.Alive }
         };
 
         _characterServiceMock
@@ -83,7 +84,7 @@ public class CharacterApiControllerTests
         var request = new CreateCharacterRequest
         {
             Name = "Summer Smith",
-            Status = CharacterStatus.Alive,
+            Status = CharacterStatusDto.Alive,
             Species = "Human"
         };
 
@@ -91,7 +92,7 @@ public class CharacterApiControllerTests
         {
             Id = Guid.NewGuid(),
             Name = "Summer Smith",
-            Status = CharacterStatus.Alive,
+            Status = CharacterStatusDto.Alive,
             Species = "Human"
         };
 

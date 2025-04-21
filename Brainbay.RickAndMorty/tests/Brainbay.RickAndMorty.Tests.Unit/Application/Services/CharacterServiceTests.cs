@@ -1,3 +1,4 @@
+using Brainbay.RickAndMorty.Application.Dtos.Enums;
 using Brainbay.RickAndMorty.Application.Dtos.Request;
 using Brainbay.RickAndMorty.Application.Dtos.Response;
 using Brainbay.RickAndMorty.Application.Interfaces;
@@ -98,7 +99,7 @@ public class CharacterServiceTests
     public async Task AddCharacterAsync_ThrowsIfCharacterIsNotAlive()
     {
         // Arrange
-        var request = new CreateCharacterRequest { Name = "Rick", Status = CharacterStatus.Dead};
+        var request = new CreateCharacterRequest { Name = "Rick", Status = CharacterStatusDto.Dead};
 
         // Act
         Func<Task> act = async () => await _service.AddCharacterAsync(request);
@@ -112,7 +113,7 @@ public class CharacterServiceTests
     public async Task AddCharacterAsync_ThrowsIfDuplicateCharacter()
     {
         // Arrange
-        var request = new CreateCharacterRequest { Name = "Rick", Status = CharacterStatus.Alive };
+        var request = new CreateCharacterRequest { Name = "Rick", Status = CharacterStatusDto.Alive };
         _characterRepoMock.Setup(r => r.CharacterExists("Rick")).ReturnsAsync(false);
 
         // Act
@@ -130,7 +131,7 @@ public class CharacterServiceTests
         var request = new CreateCharacterRequest
         {
             Name = "Rick",
-            Status = CharacterStatus.Alive,
+            Status = CharacterStatusDto.Alive,
             OriginLocationId = Guid.NewGuid(),
         };
 

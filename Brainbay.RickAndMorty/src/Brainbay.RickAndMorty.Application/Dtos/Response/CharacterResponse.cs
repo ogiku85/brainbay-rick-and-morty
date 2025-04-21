@@ -1,4 +1,4 @@
-using Brainbay.RickAndMorty.Domain.Enums;
+using Brainbay.RickAndMorty.Application.Dtos.Enums;
 
 namespace Brainbay.RickAndMorty.Application.Dtos.Response;
 
@@ -7,7 +7,7 @@ public class CharacterResponse
     public Guid Id { get; set; }
 
     public string Name { get; set; }
-    public CharacterStatus Status { get; set; }
+    public CharacterStatusDto Status { get; set; }
     public string Species { get; set; }
     public string Type { get; set; }
     public string Gender { get; set; }

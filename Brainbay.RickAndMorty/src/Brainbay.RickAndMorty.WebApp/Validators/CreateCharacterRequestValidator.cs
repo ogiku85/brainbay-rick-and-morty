@@ -1,3 +1,4 @@
+using Brainbay.RickAndMorty.Application.Dtos.Enums;
 using Brainbay.RickAndMorty.Application.Dtos.Request;
 using Brainbay.RickAndMorty.Domain.Enums;
 using FluentValidation;
@@ -19,7 +20,7 @@ public class CreateCharacterRequestValidator : AbstractValidator<CreateCharacter
 
         RuleFor(x => x.Status)
             .NotEmpty().WithMessage("Status is required.")
-            .Must(status => status == CharacterStatus.Alive)
+            .Must(status => status == CharacterStatusDto.Alive)
             .WithMessage("Status must be Alive.");
     }
 }

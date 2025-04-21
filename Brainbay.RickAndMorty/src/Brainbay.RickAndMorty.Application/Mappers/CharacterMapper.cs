@@ -15,7 +15,7 @@ public static class CharacterMapper
         {
             Id = character.Id,
             Name = character.Name,
-            Status = character.Status,
+            Status = character.Status.ToDto(),
             Gender = character.Gender,
             ImageUrl = character.ImageUrl,
             Species = character.Species,
@@ -39,7 +39,7 @@ public static class CharacterMapper
         {
             Id = id,
             Name = createCharacterRequest.Name,
-            Status = createCharacterRequest.Status,
+            Status = createCharacterRequest.Status.ToDomain(),
             Species = createCharacterRequest.Species,
             Type = createCharacterRequest.Type,
             LocationId = createCharacterRequest.LocationId,

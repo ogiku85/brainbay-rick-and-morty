@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Brainbay.RickAndMorty.Application.Dtos.Enums;
 using Brainbay.RickAndMorty.Application.Dtos.Request;
 using Brainbay.RickAndMorty.Application.Dtos.Response;
 using Brainbay.RickAndMorty.Application.Interfaces;
@@ -64,7 +65,7 @@ namespace Brainbay.RickAndMorty.Application.Services;
 
         public async Task<CharacterResponse> AddCharacterAsync(CreateCharacterRequest createCharacterRequest)
         {
-            if (createCharacterRequest.Status != CharacterStatus.Alive)
+            if (createCharacterRequest.Status != CharacterStatusDto.Alive)
                 throw new ArgumentException("Only alive characters can be added.");
 
             var characterExists = await _characterRepository.CharacterExists(createCharacterRequest.Name);
