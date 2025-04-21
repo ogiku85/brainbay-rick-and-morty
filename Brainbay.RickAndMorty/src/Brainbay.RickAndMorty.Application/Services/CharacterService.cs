@@ -54,7 +54,6 @@ namespace Brainbay.RickAndMorty.Application.Services;
 
         public async Task<GetCharactersResponse> GetByPlanetAsync(string planet)
         {
-            //return (await GetAllAsync()).Characters;
             var getCharactersResponse = await GetAllAsync();
             var charactersFromCurrentPlanet = getCharactersResponse?.Characters
                 .Where(c => c.Origin?.Name.ToLower() == planet?.ToLower())
@@ -70,7 +69,7 @@ namespace Brainbay.RickAndMorty.Application.Services;
 
             var characterExists = await _characterRepository.CharacterExists(createCharacterRequest.Name);
             
-            if (!characterExists)
+            if (characterExists)
                 throw new InvalidOperationException("Duplicate character.");
 
             var character = createCharacterRequest.ToCharacter();

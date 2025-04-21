@@ -16,7 +16,7 @@ public static class EpisodeMapper
     
     public static EpisodeResponse? ToEpisodeResponse(this CharacterEpisode? characterEpisode)
     {
-        if (characterEpisode == null)
+        if (characterEpisode == null || characterEpisode?.Episode == null)
             return null;
         
         return new EpisodeResponse

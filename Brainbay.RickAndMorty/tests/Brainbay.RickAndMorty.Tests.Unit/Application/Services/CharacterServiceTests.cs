@@ -114,7 +114,7 @@ public class CharacterServiceTests
     {
         // Arrange
         var request = new CreateCharacterRequest { Name = "Rick", Status = CharacterStatusDto.Alive };
-        _characterRepoMock.Setup(r => r.CharacterExists("Rick")).ReturnsAsync(false);
+        _characterRepoMock.Setup(r => r.CharacterExists("Rick")).ReturnsAsync(true);
 
         // Act
         Func<Task> act = async () => await _service.AddCharacterAsync(request);
@@ -135,7 +135,7 @@ public class CharacterServiceTests
             OriginLocationId = Guid.NewGuid(),
         };
 
-        _characterRepoMock.Setup(r => r.CharacterExists("Rick")).ReturnsAsync(true);
+        _characterRepoMock.Setup(r => r.CharacterExists("Rick")).ReturnsAsync(false);
         _characterRepoMock.Setup(r => r.AddAsync(It.IsAny<Character>())).Returns(Task.CompletedTask);
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).Returns(Task.CompletedTask);
         _cacheMock.Setup(c => c.RemoveAsync(It.IsAny<string>())).Returns(Task.CompletedTask);

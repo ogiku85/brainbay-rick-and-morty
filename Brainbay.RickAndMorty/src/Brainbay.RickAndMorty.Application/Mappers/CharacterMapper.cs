@@ -45,6 +45,7 @@ public static class CharacterMapper
             LocationId = createCharacterRequest.LocationId,
             OriginId = createCharacterRequest.OriginLocationId,
             ImageUrl = createCharacterRequest.ImageUrl,
+            Gender = createCharacterRequest.Gender,
             CharacterEpisodes = createCharacterRequest.Episodes.Select(e => new CharacterEpisode
             {
                 CharacterId = id,

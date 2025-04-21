@@ -1,5 +1,7 @@
 using Brainbay.RickAndMorty.Domain.Entities;
+using Brainbay.RickAndMorty.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Brainbay.RickAndMorty.Infrastructure;
 
@@ -14,12 +16,18 @@ public class CharacterDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var converter = new EnumToStringConverter<CharacterStatus>();
+        
         modelBuilder.Entity<CharacterEpisode>()
             .HasKey(ce => new { ce.CharacterId, ce.EpisodeId });
 
         modelBuilder.Entity<Character>()
             .HasIndex(c => c.ExternalId)
             .IsUnique();
+        
+        modelBuilder.Entity<Character>()
+            .Property(e => e.Status)
+            .HasConversion(converter);
 
         modelBuilder.Entity<Location>()
             .HasIndex(l => l.Url)
